@@ -7,7 +7,8 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using static UnityEditor.Enemeteen.CurveEditorSettings;
+// using static UnityEditor.Enemeteen.CurveEditorSettings;
+using RectangleToolFlags = UnityEditor.Enemeteen.CurveEditorSettings.RectangleToolFlags;
 
 namespace UnityEditor.Enemeteen {
 	internal class CurveEditorRectangleTool : RectangleTool {

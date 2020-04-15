@@ -11,7 +11,8 @@ using System.Linq;
 
 using Object = UnityEngine.Object;
 using TangentMode = UnityEditor.AnimationUtility.TangentMode;
-using static UnityEditor.Enemeteen.CurveEditorSettings;
+using RectangleToolFlags = UnityEditor.Enemeteen.CurveEditorSettings.RectangleToolFlags;
+// using static UnityEditor.Enemeteen.CurveEditorSettings;
 
 namespace UnityEditor.Enemeteen {
 	// External selection interface
