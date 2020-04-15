@@ -9,5 +9,6 @@ Copy the folder `Custom Animation Window Tryhard` anywhere in the Assets folder 
 - Added Playback speed, with the option to play backwards
 - Added Loop mode and play-once mode
 - Added Play from beginning mode
+- Added search field to the clip selector
 
 https://www.youtube.com/watch?v=t1pUbf_jVQM
