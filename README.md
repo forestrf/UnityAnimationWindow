@@ -1,6 +1,8 @@
 # UnityAnimationWindow
 Adding functionality and fixes to the Unity Animation Window, needs Unity 2019.3.9 and above to function correctly
 
+![Short video showing the main features](https://raw.githubusercontent.comforestrf/UnityAnimationWindow/master/preview.gif)
+
 ### How to use
 Copy the folder `Custom Animation Window Tryhard` anywhere in the Assets folder and use the window located at `Window/Animation/Enemeteen` (use this window instead of the default one)
 
@@ -10,5 +12,3 @@ Copy the folder `Custom Animation Window Tryhard` anywhere in the Assets folder 
 - Added Loop mode and play-once mode
 - Added Play from beginning mode
 - Added search field to the clip selector
-
-https://www.youtube.com/watch?v=t1pUbf_jVQM
