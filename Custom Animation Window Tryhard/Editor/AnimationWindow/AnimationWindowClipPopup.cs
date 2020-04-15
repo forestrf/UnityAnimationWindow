@@ -3,7 +3,6 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEditorInternal.Enemeteen;
 
@@ -12,132 +11,65 @@ namespace UnityEditor.Enemeteen {
 	class AnimationWindowClipPopup {
 		[SerializeField] public AnimationWindowState state;
 
-		static int s_ClipPopupHash = "s_ClipPopupHash".GetHashCode();
-
-		private const float kMenuOffsetMac = 19;
+		ClipPopupCallbackInfo popupCI = new ClipPopupCallbackInfo();
+		ClipPopupCallbackInfo addCI = new ClipPopupCallbackInfo();
 
 		internal sealed class ClipPopupCallbackInfo {
-			// The global shared popup state
-			public static ClipPopupCallbackInfo instance = null;
-
 			// Name of the command event sent from the popup menu to OnGUI when user has changed selection
 			private const string kPopupMenuChangedMessage = "ClipPopupMenuChanged";
 
-			// The control ID of the popup menu that is currently displayed.
-			// Used to pass selection changes back again...
-			private readonly int m_ControlID = 0;
-
 			// Which item was selected
-			private AnimationClip m_SelectedClip = null;
+			public AnimationClip selectedClip;
 
 			// Which view should we send it to.
-			private readonly GUIView m_SourceView;
+			private GUIView m_SourceView;
 
-			public ClipPopupCallbackInfo(int controlID) {
-				m_ControlID = controlID;
+			public void SetSourceView() {
 				m_SourceView = GUIView.current;
 			}
 
-			public static AnimationClip GetSelectedClipForControl(int controlID, AnimationClip clip) {
+			public AnimationClip GetSelectedClipForControl(AnimationClip clip) {
 				Event evt = Event.current;
 				if (evt.type == EventType.ExecuteCommand && evt.commandName == kPopupMenuChangedMessage) {
-					if (instance == null) {
-						Debug.LogError("Popup menu has no instance");
-						return clip;
-					}
-					if (instance.m_ControlID == controlID) {
-						clip = instance.m_SelectedClip;
-						instance = null;
-						GUI.changed = true;
-						evt.Use();
-					}
+					clip = selectedClip;
+					GUI.changed = true;
+					evt.Use();
 				}
 				return clip;
 			}
 
-			public static void SetSelectedClip(AnimationClip clip) {
-				if (instance == null) {
-					Debug.LogError("Popup menu has no instance");
-					return;
-				}
-
-				instance.m_SelectedClip = clip;
-			}
-
-			public static void SendEvent() {
-				if (instance == null) {
-					Debug.LogError("Popup menu has no instance");
-					return;
-				}
-
-				instance.m_SourceView.SendEvent(EditorGUIUtility.CommandEvent(kPopupMenuChangedMessage));
+			public void SendEvent() {
+				m_SourceView.SendEvent(EditorGUIUtility.CommandEvent(kPopupMenuChangedMessage));
 			}
 		}
 
 
-		private void DisplayClipMenu(Rect position, int controlID, AnimationClip clip) {
-			AnimationClip[] clips = GetOrderedClipList();
-			GUIContent[] menuContent = GetClipMenuContent(clips);
-			int selected = ClipToIndex(clips, clip);
+		private void DisplayClipMenu(Rect position, AnimationClip clip) {
+			popupCI.SetSourceView();
 
-			// Center popup menu around button widget
-			if (Application.platform == RuntimePlatform.OSXEditor) {
-				position.y = position.y - selected * EditorGUI.kSingleLineHeight - kMenuOffsetMac;
-			}
-
-			ClipPopupCallbackInfo.instance = new ClipPopupCallbackInfo(controlID);
-
-			EditorUtility.DisplayCustomMenu(position, menuContent, null, selected, (userData, options, index) => {
-				if (index < clips.Length) {
-					ClipPopupCallbackInfo.SetSelectedClip(clips[index]);
-				}
-				else {
-					AnimationClip newClip = AnimationWindowUtility.CreateNewClip(state.selection.rootGameObject.name);
-					if (newClip) {
-						AnimationWindowUtility.AddClipToAnimationPlayerComponent(state.activeAnimationPlayer, newClip);
-						ClipPopupCallbackInfo.SetSelectedClip(newClip);
-					}
-				}
-
-				ClipPopupCallbackInfo.SendEvent();
-			}, null);
+			AnimationSelectorWindow.DrawPresetButton(clip, GetOrderedClipList(), position, (selectedClip) => {
+				popupCI.selectedClip = selectedClip;
+				popupCI.SendEvent();
+			});
 		}
 
 		// (case 1029160) Modified version of EditorGUI.DoPopup to fit large data list query.
 		private AnimationClip DoClipPopup(AnimationClip clip, GUIStyle style) {
 			Rect position = EditorGUILayout.GetControlRect(false, EditorGUI.kSingleLineHeight, style);
-			int controlID = GUIUtility.GetControlID(s_ClipPopupHash, FocusType.Keyboard, position);
 
-			clip = ClipPopupCallbackInfo.GetSelectedClipForControl(controlID, clip);
+			clip = popupCI.GetSelectedClipForControl(clip);
+			clip = addCI.GetSelectedClipForControl(clip);
 
-			Event evt = Event.current;
-			switch (evt.type) {
-				case EventType.Repaint:
-					Font originalFont = style.font;
-					if (originalFont && EditorGUIUtility.GetBoldDefaultFont() && originalFont == EditorStyles.miniFont) {
-						style.font = EditorStyles.miniBoldFont;
-					}
+			Font originalFont = style.font;
+			if (originalFont && EditorGUIUtility.GetBoldDefaultFont() && originalFont == EditorStyles.miniFont) {
+				style.font = EditorStyles.miniBoldFont;
+			}
 
-					GUIContent buttonContent = EditorGUIUtility.TempContent(CurveUtility.GetClipName(clip));
-					buttonContent.tooltip = AssetDatabase.GetAssetPath(clip);
+			GUIContent buttonContent = EditorGUIUtility.TempContent(CurveUtility.GetClipName(clip));
+			buttonContent.tooltip = AssetDatabase.GetAssetPath(clip);
 
-					style.Draw(position, buttonContent, controlID, false);
-
-					style.font = originalFont;
-					break;
-				case EventType.MouseDown:
-					if (evt.button == 0 && position.Contains(evt.mousePosition)) {
-						DisplayClipMenu(position, controlID, clip);
-						GUIUtility.keyboardControl = controlID;
-						evt.Use();
-					}
-					break;
-				case EventType.KeyDown:
-					if (evt.MainActionKeyForControl(controlID)) {
-						DisplayClipMenu(position, controlID, clip);
-						evt.Use();
-					}
-					break;
+			if (GUI.Button(position, buttonContent, style)) {
+				DisplayClipMenu(position, clip);
 			}
 
 			return clip;
@@ -145,9 +77,19 @@ namespace UnityEditor.Enemeteen {
 
 		public void OnGUI() {
 			if (state.selection.canChangeAnimationClip) {
-				EditorGUI.BeginChangeCheck();
 				var newClip = DoClipPopup(state.activeAnimationClip, AnimationWindowStyles.animClipToolbarPopup);
-				if (EditorGUI.EndChangeCheck()) {
+				if (state.selection.canCreateClips) {
+					addCI.SetSourceView();
+					if (GUILayout.Button(new GUIContent("+", "Create New Clip..."), EditorStyles.toolbarButton)) {
+						newClip = AnimationWindowUtility.CreateNewClip(state.selection.rootGameObject.name);
+						if (newClip) {
+							AnimationWindowUtility.AddClipToAnimationPlayerComponent(state.activeAnimationPlayer, newClip);
+							addCI.selectedClip = newClip;
+							addCI.SendEvent();
+						}
+					}
+				}
+				if (state.activeAnimationClip != newClip) {
 					state.activeAnimationClip = newClip;
 
 					//  Layout has changed, bail out now.
@@ -160,24 +102,6 @@ namespace UnityEditor.Enemeteen {
 			}
 		}
 
-		private GUIContent[] GetClipMenuContent(AnimationClip[] clips) {
-			int size = clips.Length;
-			if (state.selection.canCreateClips)
-				size += 2;
-
-			GUIContent[] content = new GUIContent[size];
-			for (int i = 0; i < clips.Length; i++) {
-				content[i] = new GUIContent(CurveUtility.GetClipName(clips[i]));
-			}
-
-			if (state.selection.canCreateClips) {
-				content[content.Length - 2] = GUIContent.none;
-				content[content.Length - 1] = AnimationWindowStyles.createNewClip;
-			}
-
-			return content;
-		}
-
 		private AnimationClip[] GetOrderedClipList() {
 			AnimationClip[] clips = new AnimationClip[0];
 			if (state.activeRootGameObject != null)
@@ -186,15 +110,6 @@ namespace UnityEditor.Enemeteen {
 			Array.Sort(clips, (AnimationClip clip1, AnimationClip clip2) => CurveUtility.GetClipName(clip1).CompareTo(CurveUtility.GetClipName(clip2)));
 
 			return clips;
-		}
-
-		private int ClipToIndex(AnimationClip[] clips, AnimationClip clip) {
-			for (int index = 0; index < clips.Length; ++index) {
-				if (clips[index] == clip)
-					return index;
-			}
-
-			return 0;
 		}
 	}
 }
