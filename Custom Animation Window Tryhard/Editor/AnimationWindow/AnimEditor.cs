@@ -467,19 +467,16 @@ namespace UnityEditor.Enemeteen {
 			m_Events.DrawInstantTooltip(m_Position);
 		}
 
-		GUILayoutOption[] options = { GUILayout.MaxWidth(100.0f), GUILayout.MinWidth(10.0f) };
 		static GUIContent speedLabel = new GUIContent("Speed", "Playback speed.");
 		static GUIContent loopOnLabel = new GUIContent("Loop", "Loop the animation playback?");
 		static GUIContent loopOffLabel = new GUIContent("Once", "Loop the animation playback?");
 		static GUIContent startFromFirstFrameLabel = new GUIContent("|<-", "Start playing from the beginning.");
-		static GUIStyle buttonStyle;
 
 		private void TabSelectionOnGUI() {
-			if (buttonStyle == null) buttonStyle = "Button";
 			EditorGUIUtility.labelWidth = EditorStyles.label.CalcSize(speedLabel).x;
 			controlInterface.playbackSpeed = EditorGUILayout.FloatField(speedLabel, controlInterface.playbackSpeed);
-			if (GUILayout.Button(controlInterface.loop ? loopOnLabel : loopOffLabel)) controlInterface.loop = !controlInterface.loop;
-			controlInterface.playFromBeginning = GUILayout.Toggle(controlInterface.playFromBeginning, startFromFirstFrameLabel, buttonStyle);
+			if (GUILayout.Button(controlInterface.loop ? loopOnLabel : loopOffLabel, EditorStyles.toolbarButton)) controlInterface.loop = !controlInterface.loop;
+			controlInterface.playFromBeginning = GUILayout.Toggle(controlInterface.playFromBeginning, startFromFirstFrameLabel, EditorStyles.toolbarButton);
 			EditorGUIUtility.labelWidth = 0;
 
 			//GUILayout.Label("play range start");
