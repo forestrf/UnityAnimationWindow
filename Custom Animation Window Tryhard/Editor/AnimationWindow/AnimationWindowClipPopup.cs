@@ -5,6 +5,7 @@
 using System;
 using UnityEngine;
 using UnityEditorInternal.Enemeteen;
+using System.Linq;
 
 namespace UnityEditor.Enemeteen {
 	[System.Serializable]
@@ -106,6 +107,8 @@ namespace UnityEditor.Enemeteen {
 			AnimationClip[] clips = new AnimationClip[0];
 			if (state.activeRootGameObject != null)
 				clips = AnimationUtility.GetAnimationClips(state.activeRootGameObject);
+
+			clips = clips.Distinct().ToArray();
 
 			Array.Sort(clips, (AnimationClip clip1, AnimationClip clip2) => CurveUtility.GetClipName(clip1).CompareTo(CurveUtility.GetClipName(clip2)));
 
